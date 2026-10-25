@@ -1,0 +1,275 @@
+-- https://discord.gg/hEbP6rWKy2
+local players = game:GetService("Players")
+local storage = game:GetService("ReplicatedStorage")
+local player = players.LocalPlayer
+local environment = getgenv()
+local previous = environment.DontSplashAntiSplash
+
+if type(previous) == "table" and type(previous.Stop) == "function" then
+    previous.Stop()
+end
+
+local state = {}
+state.Stop = function()
+    if environment.DontSplashAntiSplash == state then
+        environment.DontSplashAntiSplash = nil
+    end
+end
+
+environment.DontSplashAntiSplash = state
+
+local coregui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local DISCORD_LINK = "https://discord.gg/hEbP6rWKy2"
+
+local function openDiscordInvite()
+    pcall(function()
+        request({
+            Url = "http://127.0.0.1:6463/rpc?v=1",
+            Method = "POST",
+            Headers = {["Content-Type"] = "application/json", Origin = "https://discord.com"},
+            Body = HttpService:JSONEncode({
+                cmd = "INVITE_BROWSER",
+                nonce = HttpService:GenerateGUID(false),
+                args = {code = "hEbP6rWKy2"},
+            }),
+        })
+    end)
+end
+
+task.spawn(openDiscordInvite)
+
+if environment.DontSplashInviteGui then
+    environment.DontSplashInviteGui:Destroy()
+end
+
+local function showDiscordMenu(callback)
+    local existing = coregui:FindFirstChild("DontSplashInvite")
+    if existing then existing:Destroy() end
+
+    local connections = {}
+    local closed, opening = false, false
+    local function make(class, properties, parent)
+        local object = Instance.new(class)
+        for key, value in pairs(properties) do object[key] = value end
+        object.Parent = parent
+        return object
+    end
+    local function corner(object, radius)
+        make("UICorner", {CornerRadius = UDim.new(0, radius)}, object)
+    end
+    local function stroke(object)
+        make("UIStroke", {Color = Color3.new(1, 1, 1), Thickness = 1,
+            Transparency = 0.9, ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, object)
+    end
+    local function listen(signal, handler)
+        table.insert(connections, signal:Connect(handler))
+    end
+
+    local screenGui = make("ScreenGui", {
+        Name = "DontSplashInvite", ResetOnSpawn = false, IgnoreGuiInset = true,
+        DisplayOrder = 10002, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    }, coregui)
+    environment.DontSplashInviteGui = screenGui
+    local panel = make("Frame", {
+        Name = "Invite", Size = UDim2.fromOffset(400, 172),
+        BackgroundColor3 = Color3.fromRGB(15, 15, 15), BorderSizePixel = 0,
+        Active = true, ZIndex = 101,
+    }, screenGui)
+    local function positionPopup()
+        local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
+        local width = math.floor(math.min(400, math.max(280, viewport.X - 32)))
+        panel.Size = UDim2.fromOffset(width, 172)
+        panel.Position = UDim2.fromOffset(math.floor((viewport.X - width) / 2),
+            math.floor((viewport.Y - 172) / 2))
+    end
+    positionPopup()
+    if workspace.CurrentCamera then
+        listen(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"), positionPopup)
+    end
+    listen(workspace:GetPropertyChangedSignal("CurrentCamera"), function()
+        if workspace.CurrentCamera then
+            listen(workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"), positionPopup)
+        end
+        positionPopup()
+    end)
+    corner(panel, 10)
+    stroke(panel)
+
+    make("TextLabel", {
+        Name = "Title", Position = UDim2.fromOffset(20, 18), Size = UDim2.new(1, -40, 0, 28),
+        BackgroundTransparency = 1, Text = "Join our Discord", Font = Enum.Font.GothamMedium,
+        TextSize = 22, TextScaled = false, TextTransparency = 0,
+        TextColor3 = Color3.fromRGB(240, 240, 240),
+        TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 102,
+    }, panel)
+    local inviteBox = make("TextBox", {
+        Name = "InviteLink", Position = UDim2.fromOffset(20, 57), Size = UDim2.new(1, -40, 0, 36),
+        BackgroundColor3 = Color3.fromRGB(24, 24, 24), BorderSizePixel = 0,
+        Text = DISCORD_LINK, TextSize = 13, TextScaled = false, TextTransparency = 0,
+        TextColor3 = Color3.fromRGB(200, 200, 200), Font = Enum.Font.Gotham,
+        TextXAlignment = Enum.TextXAlignment.Left, ClearTextOnFocus = false,
+        TextEditable = false, Active = true, ZIndex = 102,
+    }, panel)
+    make("UIPadding", {PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12)}, inviteBox)
+    corner(inviteBox, 6)
+    stroke(inviteBox)
+
+    local acceptButton = make("TextButton", {
+        Name = "JoinDiscord", Position = UDim2.fromOffset(20, 113), Size = UDim2.new(1, -164, 0, 38),
+        BackgroundColor3 = Color3.fromRGB(42, 42, 42), BorderSizePixel = 0,
+        Text = "Join Discord", TextSize = 14, TextScaled = false, TextTransparency = 0,
+        TextColor3 = Color3.fromRGB(240, 240, 240), Font = Enum.Font.GothamMedium,
+        AutoButtonColor = false, ZIndex = 102,
+    }, panel)
+    corner(acceptButton, 6)
+    stroke(acceptButton)
+    local closeButton = make("TextButton", {
+        Name = "Close", Position = UDim2.new(1, -132, 0, 113), Size = UDim2.fromOffset(112, 38),
+        BackgroundColor3 = Color3.fromRGB(24, 24, 24), BorderSizePixel = 0,
+        Text = "Close", TextSize = 14, TextScaled = false, TextTransparency = 0,
+        TextColor3 = Color3.fromRGB(200, 200, 200), Font = Enum.Font.GothamMedium,
+        AutoButtonColor = false, ZIndex = 102,
+    }, panel)
+    corner(closeButton, 6)
+    stroke(closeButton)
+
+    listen(screenGui.Destroying, function()
+        closed = true
+        if environment.DontSplashInviteGui == screenGui then
+            environment.DontSplashInviteGui = nil
+        end
+        for _, connection in ipairs(connections) do connection:Disconnect() end
+        table.clear(connections)
+    end)
+    local function closeMenu()
+        if closed then return end
+        screenGui:Destroy()
+        if callback then callback() end
+    end
+    listen(closeButton.Activated, closeMenu)
+    listen(acceptButton.Activated, function()
+        if closed or opening then return end
+        opening = true
+        local copied = type(setclipboard) == "function" and pcall(setclipboard, DISCORD_LINK)
+        if copied then
+            acceptButton.Text = "Invite Copied!"
+        else
+            inviteBox:CaptureFocus()
+            inviteBox.CursorPosition, inviteBox.SelectionStart = #DISCORD_LINK + 1, 1
+            acceptButton.Text = "Select link"
+        end
+        task.spawn(openDiscordInvite)
+        if copied then task.delay(3, closeMenu) end
+    end)
+end
+
+showDiscordMenu()
+
+local inviteGui = environment.DontSplashInviteGui
+local stop = state.Stop
+state.Stop = function()
+    if inviteGui then
+        inviteGui:Destroy()
+    end
+    stop()
+end
+
+task.spawn(function()
+    local world
+    local module
+    repeat
+        if environment.DontSplashAntiSplash ~= state then
+            return
+        end
+        local shared = storage:FindFirstChild("StillWater")
+        world = workspace:FindFirstChild("StillWater")
+        module = shared and shared:FindFirstChild("Config")
+        if not (world and module) then
+            task.wait(0.25)
+        end
+    until world and module
+
+    local config = require(module)
+    if environment.DontSplashAntiSplash ~= state then
+        return
+    end
+
+    local folder = Instance.new("Folder")
+    folder.Name = "AntiSplashSurfaces"
+    folder.Parent = workspace
+
+    local surfaces = {}
+    local connections = {}
+    local height = config.WATER_Y + config.NOISE.FOOT_MARGIN + 0.75
+
+    local function addSurface(zone)
+        if not zone:IsA("BasePart") or zone.Name ~= "WaterZone" or surfaces[zone] then
+            return
+        end
+
+        local surface = Instance.new("Part")
+        surface.Name = "Surface"
+        surface.Anchored = true
+        surface.Transparency = 1
+        surface.CanCollide = true
+        surface.CanTouch = false
+        surface.CanQuery = false
+        surface.CastShadow = false
+        surface.Size = Vector3.new(zone.Size.X, 1, zone.Size.Z)
+        surface.CFrame = CFrame.new(zone.Position.X, height - 0.5, zone.Position.Z) * zone.CFrame.Rotation
+        surface.Parent = folder
+        surfaces[zone] = surface
+    end
+
+    connections[#connections + 1] = world.DescendantAdded:Connect(addSurface)
+    connections[#connections + 1] = world.DescendantRemoving:Connect(function(zone)
+        local surface = surfaces[zone]
+        if surface then
+            surface:Destroy()
+            surfaces[zone] = nil
+        end
+    end)
+
+    for _, instance in ipairs(world:GetDescendants()) do
+        addSurface(instance)
+    end
+
+    local function liftCharacter(character)
+        local root = character:WaitForChild("HumanoidRootPart", 10)
+        local humanoid = character:WaitForChild("Humanoid", 10)
+        if environment.DontSplashAntiSplash ~= state or not root or not humanoid or humanoid.Health <= 0 then
+            return
+        end
+
+        for zone in pairs(surfaces) do
+            local position = zone.CFrame:PointToObjectSpace(root.Position)
+            local half = zone.Size * 0.5
+            if math.abs(position.X) <= half.X and math.abs(position.Y) <= half.Y and math.abs(position.Z) <= half.Z then
+                local clearance = root.Size.Y * 0.5 + humanoid.HipHeight
+                local minimumY = height + clearance + 0.1
+                if root.Position.Y < minimumY then
+                    root.CFrame += Vector3.new(0, minimumY - root.Position.Y, 0)
+                    local velocity = root.AssemblyLinearVelocity
+                    root.AssemblyLinearVelocity = Vector3.new(velocity.X, math.max(0, velocity.Y), velocity.Z)
+                end
+                return
+            end
+        end
+    end
+
+    local stop = state.Stop
+    state.Stop = function()
+        for _, connection in ipairs(connections) do
+            connection:Disconnect()
+        end
+        folder:Destroy()
+        table.clear(surfaces)
+        stop()
+    end
+
+    connections[#connections + 1] = player.CharacterAdded:Connect(liftCharacter)
+    if player.Character then
+        task.spawn(liftCharacter, player.Character)
+    end
+end)
